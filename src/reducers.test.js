@@ -1,4 +1,4 @@
-import { dataPoint, performanceTableData } from "./reducers"
+import { dataPoint, performanceData } from "./reducers"
 
 
 const findBy = (coll,benchmark, params) => coll.find((it) => it.benchmark == benchmark && it.params == params)
@@ -10,7 +10,7 @@ test('use the latest data for performance table', () => {
     dataPoint("1.0.1", "benchmark 1", "param1", 102, 3),
     dataPoint("1.0.1", "benchmark 1", "param1", 103, 4)]
     //when
-    let result = performanceTableData(points,"1.0.0","1.0.1")
+    let result = performanceData(points,"1.0.0","1.0.1")
     //then    
     expect(findBy(result,"benchmark 1", "param1")).toMatchObject({
         benchmark:"benchmark 1",params:"param1", oldValue:100, newValue:103        
@@ -28,7 +28,7 @@ test('returns values for every combination of benchmark and params', () => {
         dataPoint("1.0.2", "benchmark 2", "param1", 100, 3),
     ]
     //when
-    let result = performanceTableData(points,"1.0.0","1.0.2")
+    let result = performanceData(points,"1.0.0","1.0.2")
     //then
     expect(result.length).toEqual(3)
     expect(findBy(result,"benchmark 1", "param2")).toMatchObject({

@@ -1,5 +1,6 @@
 import React from 'react';
-import Table from './Table'
+import PerformanceTable from  './ReleaseTable';
+
 
 import './App.css';
 
@@ -7,7 +8,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-          <Table/>
+          <PerformanceTable/>
        </header>
     </div>
   );
