@@ -1,32 +1,42 @@
-export const dataPoint = (version,benchmark, params, mean, date) =>
+import Papa from 'papaparse';
+
+export const dataPoint = (version,benchmark, params, value, date) =>
 ({
-    version: version,
+    version,
     group: "Cypher",
-    benchmark: benchmark,
-    params: params,
+    benchmark,
+    params,
     mode: "LATENCY",
-    value: mean,
-    date: date
+    value,
+    date
 })
+
+const parseParams = (params) => params.split('_').slice(1).join(" ").replace(","," ")
+
+export const toDataPoint = ([version,group,benchmark, params, mode, value, unit, date]) =>
+({version, group, benchmark, params: parseParams(params), mode, value: parseFloat(value), unit, date: parseInt(date)})
+
 
 export const perfPoint = (benchmark,params, oldValue, newValue, change) => ({benchmark,params,oldValue,newValue,change})
 
 const change = (oldValue, newValue) => -(newValue-oldValue)/oldValue;
 
-export const performanceData = (data,oldVersion,newVersion) => {    
-    let grouped = data.reduce((agg,x) => {        
-        let key = [x.benchmark,x.params]
+const groupBy = (coll, f) =>
+    coll.reduce((agg,x) => {        
+        let key = f(x)
         if (!agg.hasOwnProperty(key)) {
             agg[key] = [];
         }
-       agg[key].push(x)
-       return agg
+        agg[key].push(x)
+        return agg
     },{})
-    
+
+export const performanceData = (data,oldVersion,newVersion) => {    
+    let grouped = groupBy(data, (x=>[x.benchmark,x.params]));
     return Object.values(grouped).map((data) =>  {
         let sorted = data.sort((x,y) => y.date-x.date)
         let oldVal = sorted.find(x => x.version === oldVersion);    
-        let newVal = sorted.find(x => x.version === newVersion);
+        let newVal = sorted.find(x => x.version === newVersion);           
         return perfPoint(oldVal.benchmark, 
             oldVal.params, 
             oldVal.value, 
@@ -36,70 +46,119 @@ export const performanceData = (data,oldVersion,newVersion) => {
     );
 }
 
-const performanceTableData = (data, colapsedItems) => {
-    let grouped = data.reduce((agg,x) => {        
-        let key = [x.benchmark]
-        if (!agg.hasOwnProperty(key)) {
-            agg[key] = [];
-        }
-       agg[key].push(x)
-       return agg
-    },{})
+const groupedItem = (name, changes, colapsed) => ({
+    name,
+    change: changes.reduce((a,b) => a+b) / changes.length,
+    type: 'grouped',
+    colapsed
+})
 
-    return Object.values(grouped).map((data) =>  {
-        let {benchmark} = data[0];
-        let avgChange = data.map(it => it.change).reduce((a,b) => a+b) / data.length
-        let items = data.map(it=> ({name: it.params, oldValue: it.oldValue,newValue: it.newValue,change: it.change}))
-        let colapsed = colapsedItems[benchmark]
-        let grouped = {name: benchmark, change: avgChange, type: 'grouped', colapsed}
-        return colapsed ? [grouped] : [grouped, ...items].flat()    
+const toTableItem = ({params,oldValue,newValue,change}) => 
+    ({oldValue,newValue,change, name: params})
+
+const performanceTableData = (data, colapsedItems) => {    
+    let grouped = groupBy(data, (x=>x.benchmark));    
+    return Object.values(grouped).map((xs) =>  {
+        let [{benchmark}] = xs
+        let colapsed = !!colapsedItems[benchmark]
+        let grouped = groupedItem(
+            benchmark, 
+            xs.map(it => it.change), 
+            colapsed)
+        return colapsed 
+                ? [grouped] 
+                : [grouped, ...xs.map(toTableItem)].flat()    
     }).flat();
 }
 
-
 const initialState = {
     oldVersion: "old",
-    newVersion: "new", 
-    rawdata: [dataPoint("old","IndexScan.executePlan", "(propertyType,long)(runtime,interpreted)",12.8918264082474,1580833090210),
-        dataPoint("old","IndexScan.executePlan", "(propertyType,long)(runtime,interpreted)",13.1281222103237,1580766830318),
-        dataPoint("old","IndexScan.executePlan", "(propertyType,long)(runtime,interpreted)",13.2180848805917,1580739379847),
-        dataPoint("old","IndexScan.executePlan", "(propertyType,long)(runtime,interpreted)",12.9616675359116,1580375605806),
-        dataPoint("old","IndexScan.executePlan", "(propertyType,long)(runtime,interpreted)",12.9616675359116,1580375605806),        
-        dataPoint("old","IndexScan.executePlan", "(propertyType,long)(runtime,interpreted)",13.2180848805917,1580739379847),
-        dataPoint("new","IndexScan.executePlan", "(propertyType,long)(runtime,interpreted)",13.2180848805917,1580739379847)
-    ],
-    data: [],
+    newVersion: "new",
+    fetchingData: false, 
+    rawdata: [],
+    perfData: [],
     performanceTable: [],
     colapsed: {}
 }
 
-function createInitState() {
-    let {rawdata, oldVersion, newVersion} = initialState;
-    let perfData = performanceData(rawdata, oldVersion, newVersion)
-    let perfTableData = performanceTableData(perfData, {})
-    return {...initialState,        
-        data: perfData,        
-        colapsed: {},                    
-        performanceTable: perfTableData}}
+export const createInitState = () => {
+    return initialState
+}
+
+const setAllColapsedTo = (val, {perfData}) => {
+    var colapsed = perfData.reduce((agg, it) => ({...agg, [it.benchmark]: val}),{})    
+    var performanceTable = performanceTableData(perfData,colapsed)
+    return {colapsed, performanceTable}
+}
+
+const toggleTableElement = (name, r) => {
+    const {colapsed,perfData}  = r
+    console.log({r})
+    var colapsedWithTogled = {...colapsed, [name]: !colapsed[name]}
+    
+    var performanceTable = performanceTableData(perfData,colapsedWithTogled)
+    console.log({performanceTable})
+    return {performanceTable,
+            colapsed: colapsedWithTogled}
+}
+
+const downloadCsv = (...args) => new Promise((resolve, reject) => {
+            Papa.parse(...args, {
+                download: true,
+                complete: function({data,errors,meta}) {   
+                    if(errors.length > 0) reject(errors)
+                    resolve(data)
+                }
+            });          
+        })
+
+const skipHeader = (data) => {
+    let [first, ...rest] = data
+    return rest 
+}
+
+export const fetchDataRequest = (dispatch) => {
+    Promise.all([
+        downloadCsv("/data-old.csv"),
+        downloadCsv("/data-new.csv")
+    ]).then(([oldResult, newResult]) => {    
+        let oldVersion = oldResult[1][0]
+        let newVersion = newResult[1][0]
+        let data = [...skipHeader(oldResult), ...skipHeader(newResult)].map(toDataPoint)        
+        dispatch({type:'FETCH_DATA_SUCCESS', data, oldVersion, newVersion})
+    }).catch(error => {
+        console.error("Error when fetching data:",error)
+        alert('downloading failed. please refresh page')
+    })
+}
+
 
 export const rootReducer = (state = createInitState(), action) => {
+    console.log(action)
     switch (action.type) {
-        case 'TOGGLE':         
-            var {colapsed,data} = state
-            var performanceTable = performanceTableData(data,colapsed)            
-            return {...state, 
-                performanceTable,
-                colapsed: {...colapsed, [action.element]: !colapsed[action.element]}}
+        case 'FETCH_DATA_REQUEST':
+            return {...state, fetchingData: true}
+
+        case 'FETCH_DATA_SUCCESS':
+            
+            let {oldVersion, newVersion, data} = action;
+            let rawdata = data;
+            console.log("rawdata", rawdata.length)
+            let perfData = performanceData(rawdata, oldVersion, newVersion)           
+            console.log("perfData", perfData.length)
+            let performanceTable = performanceTableData(perfData, state.colapsed)            
+            console.log("performanceTable", performanceTable.length)
+            return {...state, rawdata, perfData, performanceTable, fetchingData: false}
+
+        case 'TOGGLE':                     
+            return {...state, ...toggleTableElement(action.element, state)}
+
         case 'EXPAND_ALL':        
-            var colapsed = {}
-            var {data} = state
-            var performanceTable = performanceTableData(data,colapsed)
-            return {...state, colapsed, performanceTable}
+            return {...state, ...setAllColapsedTo(false, state)};
+
         case 'COLLAPSE_ALL':        
-            var colapsed = state.performanceTable.reduce((agg, it) => agg[it.name] = true,{})
-            var {data} = state
-            var performanceTable = performanceTableData(data,colapsed)
-            return {...state, colapsed, performanceTable}
+            return {...state, ...setAllColapsedTo(true, state)};
+
        default:
             return state
     }
