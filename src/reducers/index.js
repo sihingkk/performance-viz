@@ -1,4 +1,6 @@
 import Papa from 'papaparse';
+import { performanceData } from './performanceData'
+import { groupBy } from './utils'
 
 export const dataPoint = (version,benchmark, params, value, date) =>
 ({
@@ -17,34 +19,9 @@ export const toDataPoint = ([version,group,benchmark, params, mode, value, unit,
 ({version, group, benchmark, params: parseParams(params), mode, value: parseFloat(value), unit, date: parseInt(date)})
 
 
-export const perfPoint = (benchmark,params, oldValue, newValue, change) => ({benchmark,params,oldValue,newValue,change})
 
-const change = (oldValue, newValue) => -(newValue-oldValue)/oldValue;
 
-const groupBy = (coll, f) =>
-    coll.reduce((agg,x) => {        
-        let key = f(x)
-        if (!agg.hasOwnProperty(key)) {
-            agg[key] = [];
-        }
-        agg[key].push(x)
-        return agg
-    },{})
-
-export const performanceData = (data,oldVersion,newVersion) => {    
-    let grouped = groupBy(data, (x=>[x.benchmark,x.params]));
-    return Object.values(grouped).map((data) =>  {
-        let sorted = data.sort((x,y) => y.date-x.date)
-        let oldVal = sorted.find(x => x.version === oldVersion);    
-        let newVal = sorted.find(x => x.version === newVersion);           
-        return perfPoint(oldVal.benchmark, 
-            oldVal.params, 
-            oldVal.value, 
-            newVal.value,
-            change(oldVal.value,newVal.value))
-        }
-    );
-}
+    
 
 const groupedItem = (name, changes, colapsed) => ({
     name,
@@ -93,11 +70,8 @@ const setAllColapsedTo = (val, {perfData}) => {
 
 const toggleTableElement = (name, r) => {
     const {colapsed,perfData}  = r
-    console.log({r})
     var colapsedWithTogled = {...colapsed, [name]: !colapsed[name]}
-    
     var performanceTable = performanceTableData(perfData,colapsedWithTogled)
-    console.log({performanceTable})
     return {performanceTable,
             colapsed: colapsedWithTogled}
 }
@@ -132,23 +106,20 @@ export const fetchDataRequest = (dispatch) => {
     })
 }
 
+const fetchDataSuccess = ({oldVersion, newVersion, data}) => {
+    let rawdata = data;
+    let perfData = performanceData(rawdata, oldVersion, newVersion)                       
+    let performanceTable = performanceTableData(perfData, state.colapsed)            
+    return {rawdata, perfData, performanceTable, fetchingData: false}
+}
 
 export const rootReducer = (state = createInitState(), action) => {
-    console.log(action)
     switch (action.type) {
         case 'FETCH_DATA_REQUEST':
             return {...state, fetchingData: true}
 
-        case 'FETCH_DATA_SUCCESS':
-            
-            let {oldVersion, newVersion, data} = action;
-            let rawdata = data;
-            console.log("rawdata", rawdata.length)
-            let perfData = performanceData(rawdata, oldVersion, newVersion)           
-            console.log("perfData", perfData.length)
-            let performanceTable = performanceTableData(perfData, state.colapsed)            
-            console.log("performanceTable", performanceTable.length)
-            return {...state, rawdata, perfData, performanceTable, fetchingData: false}
+        case 'FETCH_DATA_SUCCESS':                     
+            return {...state, ...fetchDataSuccess(action)}
 
         case 'TOGGLE':                     
             return {...state, ...toggleTableElement(action.element, state)}
