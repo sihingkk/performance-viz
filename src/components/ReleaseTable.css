@@ -3,6 +3,12 @@
     zoom: 1;
 }
 
+.grouped {
+    cursor: pointer;
+    background-color: #e5f5f9;
+    color: #1c2a3e;
+}
+
 th {
     font-family: Lato,Helvetica Neue,Helvetica,Arial,sans-serif;   
     font-size: 0.75em;
@@ -14,8 +20,7 @@ th {
     border-spacing: 0;
     padding: 0;
     -webkit-font-smoothing: subpixel-antialiased;
-    
-    }
+}
 
 td {
     font-family: Lato,Helvetica Neue,Helvetica,Arial,sans-serif;   

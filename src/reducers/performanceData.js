@@ -6,7 +6,6 @@ export const perfPoint = (benchmark,params, oldValue, newValue, change, oldVaria
 const mean = (xs) =>
     xs.reduce((agg, x) => agg+x) / xs.length
 
-
 const variance = (xs) => {
     let m = mean(xs)
     return xs.reduce(function(agg, x) {
@@ -27,15 +26,14 @@ export const performanceData = (data,oldVersion,newVersion) => {
         
         let oldVals = sorted.filter(x => x.version === oldVersion);    
         let newVals = sorted.filter(x => x.version === newVersion);           
-        
 
         return perfPoint(oldVal.benchmark, 
             oldVal.params, 
             oldVal.value, 
             newVal.value,
-            change(oldVal.value,newVal.value),
-            variance(oldVals),
-            variance(newVals))
+            change(oldVal.value, newVal.value),
+            variance(oldVals.map(it=> it.value)),
+            variance(newVals.map(it=> it.value)))
         }
     );
 }

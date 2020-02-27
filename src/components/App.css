@@ -1,0 +1,31 @@
+.navbar {
+    padding-left: 30px;
+    background-color: #2c97ad;
+    color: #fff;
+}
+
+.navbar-item {
+    color: #fff;
+}
+.navbar-item:hover {
+    background-color: #28889c; /* #00596f */
+}
+
+.header {
+    margin: 0px !important;
+    background-color: #003540;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    
+    min-height: 80px;
+    
+    font-size: 1.25em;
+    font-weight: 700;
+    letter-spacing: .05rem;
+    line-height: .75;
+    padding: 0 .1em 0 .5em;
+    text-transform: uppercase;
+}
+
+
