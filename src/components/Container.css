@@ -1,0 +1,8 @@
+.wrapper {
+  display: flex;
+  justify-content: space-between;
+}
+
+.sidebar {
+  height: 25vh;
+}

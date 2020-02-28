@@ -1,5 +1,3 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-
 ## Available Scripts
 
 In the project directory, you can run:
@@ -27,22 +25,6 @@ Your app is ready to be deployed!
 
 See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
 ### Code Splitting
 
 This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
@@ -66,3 +48,17 @@ This section has moved here: https://facebook.github.io/create-react-app/docs/de
 ### `npm run build` fails to minify
 
 This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+
+### TODO
+
+There is couple of things that could be consider when developing this project:
+
+1. Seems there it's couple calculations that are depending one on another, using observables with redux-observables would make it more maintanable
+
+2. Currently 2\*std is used as measure of confidence of measurement. Would be nice to experiment with that.
+
+3. browsing different release - my assumption is those files would be stored on AWS (?) Perhaps would be nice to be able just to upload custom data through app.
+
+4. definetely would be nice to get example of situations that needs to be detected and improve visualisations
+
+5. There is good question what else is important for summary view. I wish have a bit more time and access to user to experiment with those

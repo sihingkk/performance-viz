@@ -1,0 +1,21 @@
+.chartTitle {
+  padding-left: 35px;
+  padding-top: 15px;
+}
+.title {
+  font-size: 1em;
+}
+
+.subtitle {
+  font-size: 1em;
+}
+.oldSerie {
+  color: #ff9900 !important;
+}
+.newSerie {
+  color: #3369e8 !important;
+}
+.legend {
+  padding-left: 40px;
+  width: 390;
+}
