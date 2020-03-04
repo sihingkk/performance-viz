@@ -62,3 +62,5 @@ There is couple of things that could be consider when developing this project:
 4. definetely would be nice to get example of situations that needs to be detected and improve visualisations
 
 5. There is good question what else is important for summary view. I wish have a bit more time and access to user to experiment with those
+
+6. There is a lot of edge cases that could be covered. Validation of integrity of cvs files, degenerated data warnings, general error handling, etc.
